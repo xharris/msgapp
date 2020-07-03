@@ -1,0 +1,11 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "*": ["src/*"],
+      "views": ["src/js/views"],
+      "api": ["src/js/api"],
+      "style": ["src/style"]
+    }
+  }
+}
