@@ -8,8 +8,10 @@ module.exports = {
       {
         root: [resolve('./src')],
         alias: {
-          views: './src/js/views',
+          component: './src/js/component',
+          view: './src/js/view',
           api: './src/js/api',
+          util: './src/js/util',
           style: './src/style',
         },
       },

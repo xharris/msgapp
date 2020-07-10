@@ -1,53 +1,50 @@
 import {useEffect} from 'react'
 import firestore from '@react-native-firebase/firestore'
+import * as geofirestore from 'geofirestore'
 
 import {getUID} from 'api/auth'
-console.log(firestore.Timestamp.now())
 
-const now = () => firestore.Timestamp.now().seconds()
+const now = () => firestore.Timestamp.now()
+
+export const GeoPoint = (...args) => new firestore.GeoPoint(...args)
+
+const fstore = firestore()
+const geofstore = geofirestore.initializeApp(fstore)
 
 // reference collection in database
 export const ref = {
   get messages() {
-    return firestore().collection('messages')
+    return geofstore.collection('messages')
+  },
+  get checkIns() {
+    return geofstore.collection('checkIns')
   },
 }
 
 // add document to database
 export const add = {
-  message: (value, lat, lng) =>
+  message: (value, geopoint) =>
     ref.messages.doc(getUID()).set({
       value,
-      lat,
-      lng,
+      coordinates: geopoint,
+      date_modified: now(),
+    }),
+  // room_id: optional
+  checkIn: (user_id, geopoint, room_id) =>
+    ref.checkIns.doc(user_id).set({
+      coordinates: geopoint,
+      room_id: room_id || -1,
       date_modified: now(),
     }),
 }
 
 // get database data
 export const get = {
-  /**
-   * Uses variation of great-circle distance formula:
-   * `latitude` BETWEEN `orig_latitude` - (`radius` / 69) AND `orig_latitude` + (`radius` / 69)
-   * `longitude` BETWEEN `orig_longitude` - (`radius` / (69 * COS(RADIANS(`orig_latitude`)))) AND `orig_longitude` + (`radius` / (69 * COS(RADIANS(`orig_latitude`))))
-   */
-  localMessages: (latlng, radius) => {
-    radius /= 1.609344 // km to miles
-    return ref.messages
-      .where('lat', '>', latlng.lat - radius / 69)
-      .where('lat', '<', latlng.lat + radius / 69)
-      .where(
-        'lng',
-        '>',
-        latlng.lng - radius / (69 * Math.cos((latlng.lng * Math.PI) / 180)),
-      )
-      .where(
-        'lng',
-        '<',
-        latlng.lng + radius / (69 * Math.cos((latlng.lng * Math.PI) / 180)),
-      )
-      .orderBy('date_modified', 'desc')
-      .get()
-      .then(qsnap => qsnap.docs.map(doc => doc.data()))
-  },
+  // returns [ { id:user_id, data:{ <add.message> } } ]
+  localMessages: (geopoint, radius) =>
+    ref.messages.near({center: geopoint, radius}),
+  roomMessages: room_id => ref.messages.where('room_id', '==', room_id),
+  localUsers: (geopoint, radius) =>
+    ref.checkIns.near({center: geopoint, radius}),
+  roomUsers: room_id => ref.checkIns.where('room_id', '==', room_id),
 }
