@@ -4,22 +4,24 @@ import {View} from 'react-native'
 import {InLabel, InSelect} from 'component/input'
 import {user} from 'util/storage'
 import {fromMiles} from 'util/units'
+import {useFetch} from 'util/misc'
 
 const Settings = () => {
-  const [settings, setSettings] = useState()
+  const [unit, fetchUnit] = useFetch(user.getUnits)
   const [radiusChoices, setRadiusChoices] = useState({})
 
   useEffect(() => {
     // use correct distance units
-    user.getUnits().then(u => {
-      // convert from miles to whatever
+    // convert from miles to whatever
+    if (unit) {
       setRadiusChoices({
-        [`${fromMiles(1, u)}${u}`]: 0,
-        [`${fromMiles(5, u)}${u}`]: 1,
-        [`${fromMiles(10, u)}${u}`]: 2,
+        [`${fromMiles(1, unit)}${unit}`]: 0,
+        [`${fromMiles(5, unit)}${unit}`]: 1,
+        [`${fromMiles(10, unit)}${unit}`]: 2,
       })
-    })
-  }, [settings])
+      console.log('actually changed', unit)
+    }
+  }, [unit])
 
   return (
     <View>
@@ -30,7 +32,10 @@ const Settings = () => {
             km: 'km',
             ft: 'ft',
           }}
-          onChange={user.setRadius}
+          onChange={r => {
+            user.setRadius(r).then(() => fetchUnit())
+            console.log('changed')
+          }}
         />
       </InLabel>
       <InLabel label={'radius'}>

@@ -14,12 +14,19 @@ const merge = async (key, data) => {
 
 const get = async (key, subkey) => {
   try {
-    const ret = await AsyncStorage.getItem(key)
-    return subkey && typeof key === 'object' ? ret[subkey] : ret
-  } catch (e) {
-    if (defaults_store[key]) {
-      return subkey ? defaults_store[key][subkey] : defaults_store[key]
+    var ret = await AsyncStorage.getItem(key)
+    if (ret != null) {
+      return subkey && typeof key === 'object' ? ret[subkey] : ret
     }
+  } catch (e) {}
+  return subkey ? defaults_store[key][subkey] : defaults_store[key]
+}
+
+const set = async (key, data) => {
+  try {
+    return await AsyncStorage.setItem(key, data)
+  } catch (e) {
+    console.error(e)
   }
 }
 
@@ -30,6 +37,8 @@ setDefault('user', {
 
 export const user = {
   get: async () => await get('user'),
+  getToken: async () => await get('user-private', 'token'),
+  setToken: async t => await merge('user-private', {token: t}),
   // distance for viewing/sending messages converted to miles
   setRadius: async r => await merge('user', {radius: r}),
   // will always return in miles

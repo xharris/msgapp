@@ -1,4 +1,3 @@
-import {useEffect} from 'react'
 import firestore from '@react-native-firebase/firestore'
 import * as geofirestore from 'geofirestore'
 

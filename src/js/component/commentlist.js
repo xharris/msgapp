@@ -1,9 +1,9 @@
 import React, {useEffect, useState, useRef} from 'react'
-import {View, Button, Text, FlatList, TextInput, ScrollView} from 'react-native'
+import {View, Button, Text, FlatList, TextInput} from 'react-native'
 
 import * as db from 'api/database'
+import {useFetch} from 'util/misc'
 import {user} from 'util/storage'
-import {useOnComment} from 'api/messaging'
 
 const CommentInput = () => {
   const [text, setText] = useState()
@@ -47,21 +47,22 @@ const Comment = ({value}) => (
 
 const CommentList = ({roomId}) => {
   const [msgList, setMsgList] = useState([])
+  const [radius] = useFetch(user.getRadius)
 
   useEffect(() => {
     // get realtime messages
-    const sub = roomId
-      ? db.get.roomMessages(roomId).onSnapshot(qsnap => {
-          setMsgList(qsnap.docs.map(d => ({...d.data(), key: d.id})))
-        })
-      : db.get
-          .localMessages(db.GeoPoint(0, 0), user.getRadius())
-          .onSnapshot(qsnap => {
+    if (roomId || radius) {
+      const sub = roomId
+        ? db.get.roomMessages(roomId).onSnapshot(qsnap => {
             setMsgList(qsnap.docs.map(d => ({...d.data(), key: d.id})))
           })
-
-    return sub
-  })
+        : db.get.localMessages(db.GeoPoint(0, 0), radius).onSnapshot(qsnap => {
+            setMsgList(qsnap.docs.map(d => ({...d.data(), key: d.id})))
+            console.log(qsnap.docs.map(d => ({...d.data(), key: d.id})))
+          })
+      return sub
+    }
+  }, [radius, roomId])
 
   return (
     <View>
@@ -73,7 +74,7 @@ const CommentList = ({roomId}) => {
         data={msgList}
         renderItem={({item}) => <Comment value={item.value} roomId={roomId} />}
       />
-      <CommentInput />
+      {user && <CommentInput />}
     </View>
   )
 }

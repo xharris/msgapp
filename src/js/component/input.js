@@ -1,9 +1,9 @@
-import React, {useState} from 'react'
+import React, {useState, Children} from 'react'
 import {Text, View} from 'react-native'
 import {Picker} from '@react-native-community/picker'
 
 export const InLabel = ({label, children}) => (
-  <View>{[label && <Text>{label}</Text>, ...children]}</View>
+  <View>{[label && <Text key={'label'}>{label}</Text>, children]}</View>
 )
 
 export const InSelect = ({choices, initial, onChange}) => {
@@ -13,11 +13,12 @@ export const InSelect = ({choices, initial, onChange}) => {
     <Picker
       selectedValue={selected}
       onValueChange={v => {
+        console.log(v)
         setSelected(v)
-        onChange(v)
+        // onChange(v)
       }}>
-      {Object.keys(choices).map(k => (
-        <Picker.Item label={k} value={choices[k]} />
+      {Object.keys(choices).map((k, i) => (
+        <Picker.Item key={i} label={k} value={choices[k]} />
       ))}
     </Picker>
   )
